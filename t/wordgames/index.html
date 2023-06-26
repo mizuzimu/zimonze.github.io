@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Word Game</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+  <link type="text/css" rel="stylesheet" href="../style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="trigram_counts.js"></script>
+  <script src="words_list.js"></script>
+  <script>
+    var wordsString = [];
+    var words = words_list;
+    var word;
+    var trigram;
+    var valid = false;
+    var timeleft;
+    var score;
+    function start() {
+      document.getElementById("wordInput").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+          logScore(word, valid);
+          newWord();
+        }
+      });
+      timeLeft = 10;
+      score = 0;
+    }
+    function checkWord() {
+      word = document.getElementById('wordInput').value;
+      isWord = document.getElementById('isWord')
+      if (words.includes(word)){
+        isWord.innerHTML = "Is a word";
+        isWord.style = "color:green;";
+      } else {
+        isWord.innerHTML = "Not a word";
+        isWord.style = "color:red;";
+      }
+      hasLetters = document.getElementById('hasLetters')
+      if (word.includes(trigram)){
+        hasLetters.innerHTML = "Contains given letters";
+        hasLetters.style = "color:green;";
+      } else {
+        hasLetters.innerHTML = "Does not contain given letters";
+        hasLetters.style = "color:red;";
+      }
+      if (words.includes(word) && word.includes(trigram)){
+        valid = true;
+      } else {
+        valid = false;
+      }
+    }
+    trigrams = trigram_counts;
+    //https://stackoverflow.com/a/38824395/10339299
+    var trigramKeyValuePairs = Object.keys(trigrams).map(function(key) {
+      return [String(key), trigrams[key]];
+    });
+    function validTrigrams(minOccurences){
+      return trigramKeyValuePairs.filter(pair => pair[1]>=minOccurences);
+    }
+    var valids=validTrigrams(500);
+    function newWord(){
+      document.getElementById('wordInput').value = ""
+      trigram = valids[Math.floor(Math.random() * valids.length)][0]
+      document.getElementById("requirement").innerHTML = "Type a word containing <b>"+trigram+"</b>";
+      checkWord();
+      timeLeft = 10;
+    }
+    function heartbeat(){
+      if (timeLeft == 0){
+        logScore(word, valid);
+        newWord();
+      }
+      document.getElementById("timer").innerHTML = "Time left: " + timeLeft;
+      timeLeft--;
+    }
+    var timer;
+    var started = false;
+    function init(){
+      if (!started) {
+        timer = setInterval(heartbeat,1000);
+        newWord();
+        started = true
+      }
+    }
+    function end(){
+      document.getElementById("requirement").innerHTML = "Type a word containing ";
+      clearInterval(timer);
+      timeLeft = 10;
+      document.getElementById("timer").innerHTML = "Time left: ";
+      document.getElementById("isWord").innerHTML = "Game not started";
+      document.getElementById("isWord").style = "color:red;";
+      document.getElementById("hasLetters").innerHTML = "Game not started";
+      document.getElementById("hasLetters").style = "color:red;";
+      score = 0;
+      document.getElementById("score").innerHTML = "Score: " + score;
+      document.getElementById("winningWords").innerHTML = "";
+      started = false
+    }
+    function logScore(w, v){
+      if (v){
+        timeBonus = Math.floor(timeLeft/3.5)
+        s = w.length 
+        score += s + timeBonus
+        document.getElementById("score").innerHTML = "Score: " + score;
+        document.getElementById("winningWords").innerHTML += word + " <span style='color:green;'>+"+s+"(+"+timeBonus+")</span> ";
+      } else {
+        score -= 15
+        document.getElementById("score").innerHTML = "Score: " + score;
+        document.getElementById("winningWords").innerHTML += "[invalid word] <span style='color:red;'>-15</span> ";
+      }
+    }
+  </script>
+</head>
+
+<body onload="start()">
+  <h1>Word Game</h1>
+  Rules: Press the start button. You have 10 seconds to type a word that contains the given letters in order. Press enter to submit the word (it will auto-submit once the timer ends, but there is a time bonus for submitting faster). Longer words get more points. Fun is mandatory.
+  Inspired by Tea Games on <a href="https://top.gg/bot/432610292342587392">Mudae</a>, which in turn was inspired by <a href="https://jklm.fun/">BombParty</a>.
+  <hr>
+  <button onclick="init();">Start</button>
+  <button onclick="end();">Stop (Resets score to 0)</button>
+  <div id="requirement">Type a word containing </div>
+  <div id="timer">Time left: </div>
+  Enter a word:<input type="text" id="wordInput" oninput="checkWord()">
+  <div id="isWord" style="color:red;">Game not started</div>
+  <div id="hasLetters" style="color:red;">Game not started</div>
+  <div id="score">Score: </div>
+  <div id="winningWords"></div>
+  <hr>
+  <p>Made by Zimonze</p>
+
+</body>
+
+</html>
